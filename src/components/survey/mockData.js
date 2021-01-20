@@ -1,4 +1,4 @@
-import { QuestionType } from './surveyTypes';
+import { QuestionType } from "./surveyTypes";
 export const data = [
          {
            qsType: QuestionType.Text,
@@ -19,7 +19,7 @@ export const data = [
            chidQuestions: null,
          },
          {
-           qsType: QuestionType.MultipleChoice,
+           qsType: QuestionType.SignleChoice,
            name: "study",
            question: "Bạn học ở đâu?",
            required: true,
@@ -65,6 +65,27 @@ export const data = [
                    ],
                  },
                ],
+             },
+           ],
+           defaultValue: "0",
+         },
+         {
+           qsType: QuestionType.MultipleChoice,
+           name: "xe",
+           question: "Bạn đi xe gì?",
+           required: true,
+           options: [
+             {
+               label: "Đi xe máy",
+               value: "0",
+             },
+             {
+               label: "Đi ô tô",
+               value: "1",
+             },
+             {
+               label: "Đi bộ",
+               value: "2",
              },
            ],
            defaultValue: "0",

@@ -2,7 +2,7 @@
   <div class="child-question-container">
     <div
       class="question-container"
-      v-for="item in questions"
+      v-for="item in convertedQuestion"
       :key="item.question"
     >
       <div class="quetion-label">
@@ -17,34 +17,19 @@
 
         <div v-if="item.qsType === types.MultipleChoice">
           <div v-for="option in item.options" :key="option.value">
-            <input
-              type="checkbox"
-              v-bind:name="item.name"
-              v-model="option.value"
-              v-bind:id="`${item.name}${option.value}`"
-            />
-            <label v-bind:for="`${item.name}${option.value}`">
-              {{ option.label }}</label
-            >
+            
+            <custom-checkbox :id="`${item.name}${option.value}`" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
 
-             <child-question v-if="option.chidQuestions" :questions="option.chidQuestions">
+             <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
             </child-question>
           </div>
         </div>
 
         <div v-if="item.qsType === types.SignleChoice">
           <div v-for="option in item.options" :key="option.value">
-            <input
-              type="checkbox"
-              v-bind:name="item.name"
-              v-model="option.value"
-              v-bind:id="`${item.name}${option.value}`"
-            />
-            <label v-bind:for="`${item.name}${option.value}`">
-              {{ option.label }}</label
-            >
+            <custom-checkbox :id="`${item.name}${option.value}`" type="single" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
 
-             <child-question v-if="option.chidQuestions" :questions="option.chidQuestions">
+             <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
             </child-question>
           </div>
         </div>
@@ -54,8 +39,10 @@
 </template>
 
 <script>
+import CustomCheckbox from './CustomCheckbox.vue';
 import { QuestionType } from "./surveyTypes";
 export default {
+  components: { CustomCheckbox },
   name: "child-question",
   props: {
     questions: {
@@ -63,10 +50,30 @@ export default {
       required: false,
     },
   },
-  data: function() {
+  data: function () {
+    const convertedQuestion = this.convertQuestion(this.questions);
     return {
       types: QuestionType,
+      convertedQuestion,
     };
+  },
+   methods: {
+    showChildQuestion: function (question, option) {
+      if(question.qsType == QuestionType.MultipleChoice) {
+        return option.chidQuestions && question.answer.includes(option.value);
+      }
+      return option.chidQuestions && question.answer === option.value;
+    },
+    convertQuestion: function (questions) {
+      const convertedQuestion = questions.map((item) => {
+        return {
+          ...item,
+          answer: item.qsType === QuestionType.Text || item.qsType === QuestionType.SignleChoice ? '' : [],
+          chidQuestions: item.chidQuestions ? this.convertQuestion(item.chidQuestions) : null,
+        };
+      });
+      return convertedQuestion;
+    },
   },
 };
 </script>
