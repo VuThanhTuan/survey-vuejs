@@ -20,8 +20,8 @@
             
             <custom-checkbox :id="`${item.name}${option.value}`" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
 
-             <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
-            </child-question>
+             <!-- <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
+            </child-question> -->
           </div>
         </div>
 
@@ -29,8 +29,8 @@
           <div v-for="option in item.options" :key="option.value">
             <custom-checkbox :id="`${item.name}${option.value}`" type="single" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
 
-             <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
-            </child-question>
+             <!-- <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
+            </child-question> -->
           </div>
         </div>
       </div>

@@ -117,10 +117,7 @@ export default {
       return convertedQuestion;
     },
     popupOutside: function(event) {
-      // if (event.target.contains(this.$refs["cts-dialog"])) {
-      //   this.closeDialog();
-      // }
-       if (!this.$refs["cts-dialog"].contains(event.target)) {
+      if (!event.target.closest('.cts-dialog')) {
         this.closeDialog();
       }
     },
@@ -182,7 +179,7 @@ export default {
 }
 
 .question-answer input {
-  padding: 10px 8px;
+  padding: 8px;
   border: 1px solid #212121;
   border-radius: 5px;
 }
@@ -190,7 +187,6 @@ export default {
 .btn-submit {
   padding: 10px;
   border: 1px solid #0091ea;
-  background-color: #74bde4;
   border-radius: 5px;
   font-weight: bold;
   cursor: pointer;
@@ -253,8 +249,12 @@ export default {
 }
 
 .cts-dialog h3 {
+  margin: 0;
+  padding-top: 15px;
+  padding-bottom: 15px;
   text-align: center;
   font-weight: bold;
+  border-bottom: 1px solid #0091ea;
 }
 
 @-webkit-keyframes slide-down {
