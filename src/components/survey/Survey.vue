@@ -7,8 +7,8 @@
     >
       <div class="quetion-label">
         <div class="question-num">{{ index + 1 }}</div>
-        {{ item.question }}
-        <i v-on:click="openDialog()" class="fas fa-edit"></i>
+        {{ item.question }} <span v-if="item.required" class="question-required">*</span>
+        <i v-on:click="openDialog(item)" class="fas fa-edit"></i>
       </div>
 
       <div class="question-answer">
@@ -18,7 +18,7 @@
         </div>
 
         <div v-if="item.qsType === types.SignleChoice">
-          <div v-for="option in item.options" :key="option.value">
+          <div class="question-option" v-for="option in item.options" :key="option.value">
             <custom-checkbox
               :id="`${item.name}${option.value}`"
               type="single"
@@ -35,7 +35,7 @@
         </div>
 
         <div v-if="item.qsType === types.MultipleChoice">
-          <div v-for="option in item.options" :key="option.value">
+          <div class="question-option" v-for="option in item.options" :key="option.value">
             <custom-checkbox
               :id="`${item.name}${option.value}`"
               :label="option.label"
@@ -51,12 +51,15 @@
         </div>
       </div>
     </div>
-    <button class="btn-submit">Submit</button>
+    <button class="btn-submit">Thêm Câu Hỏi</button>
     <div v-if="showDialog" class="cts-dialog-container">
       <div class="cts-dialog-backdrop"></div>
       <div class="cts-dialog-wrap" v-on:click="popupOutside($event)">
         <div ref="cts-dialog" v-bind:class="{ 'dl-hidden': true, 'cts-dialog': showDialog }" >
-          Dialog
+          <h3>Sửa Câu Hỏi</h3>
+          <div >
+            <edit-question :question="currentQuestion"></edit-question>
+          </div>
         </div>
       </div>
     </div>
@@ -66,10 +69,11 @@
 <script>
 import ChildQuestion from "./ChildQuestion.vue";
 import CustomCheckbox from "./CustomCheckbox.vue";
+import EditQuestion from './EditQuestion.vue';
 import { data } from "./mockData";
 import { QuestionType } from "./surveyTypes";
 export default {
-  components: { ChildQuestion, CustomCheckbox },
+  components: { ChildQuestion, CustomCheckbox, EditQuestion },
   name: "Survey",
   //   props: {
   //     data: {
@@ -83,6 +87,7 @@ export default {
       types: QuestionType,
       questions: convertedQuestion,
       showDialog: false,
+      currentQuestion: null,
     };
   },
   // created: function() {
@@ -112,12 +117,19 @@ export default {
       return convertedQuestion;
     },
     popupOutside: function(event) {
-      if (event.target !== this.$refs["cts-dialog"]) {
+      // if (event.target.contains(this.$refs["cts-dialog"])) {
+      //   this.closeDialog();
+      // }
+       if (!this.$refs["cts-dialog"].contains(event.target)) {
         this.closeDialog();
       }
     },
-    openDialog: function() {
+    openDialog: function(question) {
       this.showDialog = true;
+      if(question) {
+        this.currentQuestion = question;
+
+      }
     },
     closeDialog: function() {
       this.showDialog = false;
@@ -222,17 +234,27 @@ export default {
   height: 100vh;
 }
 
+.cts-dialog-virtual {
+  
+}
+
 .cts-dialog {
   background: #fff;
   display: block!important;
   width: 600px;
   min-height: 300px;
   max-height: 90%;
+  padding: 20px;
   overflow-y: auto;
   -webkit-animation: slide-down .3s ease-out;
   -moz-animation: slide-down .3s ease-out;
   box-shadow: 0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12);
   border-radius: 4px;
+}
+
+.cts-dialog h3 {
+  text-align: center;
+  font-weight: bold;
 }
 
 @-webkit-keyframes slide-down {
@@ -246,5 +268,14 @@ export default {
 
 .dl-hidden {
   display: none;
+}
+
+.question-required {
+  color: #cc2936;
+}
+
+.question-option {
+  margin-bottom: 10px;
+  margin-top: 10px;
 }
 </style>

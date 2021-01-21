@@ -7,7 +7,7 @@
       :value="optionValue"
       @change="checkBoxChange()"
     />
-    <div class="cbx-text">{{ label }}</div>
+    <span class="cbx-text">{{ label }}</span>
     <span class="checkmark"></span>
   </label>
 </template>
@@ -74,13 +74,11 @@ export default {
 
 <style scoped>
 .cbx-container {
-  display: block;
   position: relative;
   cursor: pointer;
   font-size: 22px;
   height: 25px;
-  margin-bottom: 15px;
-  margin-top: 15px;
+  margin-right: 20px;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -138,7 +136,7 @@ input:checked ~ .cbx-text {
   width: calc(100% - 45px);
   overflow: hidden;
   text-align: left;
-  padding-left: 45px;
+  padding-left: 35px;
   white-space: nowrap;
   font-size: 15px;
   font-weight: normal;
