@@ -2,69 +2,83 @@
   <div class="survey-container">
     <h1>Khảo Sát</h1>
     <div class="survey-header">
+      <button v-on:click="openAddNewQuestion()" class="btn-submit" style="margin-right: 10px">
+        Thêm nhóm
+      </button>
       <button v-on:click="openAddNewQuestion()" class="btn-submit">
         Thêm câu hỏi
       </button>
     </div>
-    <div
-      class="question-container"
-      v-for="(item, index) in questions"
-      :key="item.question"
-    >
-      <div class="quetion-label">
-        <div class="question-num">{{ index + 1 }}</div>
-        {{ item.question }}
-        <span v-if="item.required" class="question-required">*</span>
-        <i v-on:click="openDialog(item)" class="fas fa-edit"></i>
+
+    <!-- Question -->
+    <div class="group-container" v-for="group in groups" :key="group.group">
+      <div class="group-header">
+        {{ group.group }}
       </div>
-
-      <div class="question-answer">
-        <div v-if="item.qsType === types.Text">
-          <label class="input-text-label">Trả lời: </label
-          ><input v-bind:name="item.name" v-model="item.answer" />
+      <div
+        class="question-container"
+        v-for="(item, index) in group.questions"
+        :key="item.question"
+      >
+        <div class="quetion-label">
+          <div class="question-num">{{ index + 1 }}</div>
+          {{ item.question }}
+          <span v-if="item.required" class="question-required">*</span>
+          <i v-on:click="openDialog(item)" class="fas fa-edit"></i>
         </div>
 
-        <div v-if="item.qsType === types.SignleChoice">
-          <div
-            class="question-option"
-            v-for="option in item.options"
-            :key="option.value"
-          >
-            <custom-checkbox
-              type="single"
-              :label="option.label"
-              v-model="item.answer"
-              :optionValue="option.value"
-            ></custom-checkbox>
-            <child-question
-              v-if="option.chidQuestions"
-              :questions="option.chidQuestions"
-            >
-            </child-question>
+        <div class="question-answer">
+          <div v-if="item.qsType === types.Text">
+            <label class="input-text-label">Trả lời: </label
+            ><input v-bind:name="item.name" v-model="item.answer" />
           </div>
-        </div>
 
-        <div v-if="item.qsType === types.MultipleChoice">
-          <div
-            class="question-option"
-            v-for="option in item.options"
-            :key="option.value"
-          >
-            <custom-checkbox
-              :label="option.label"
-              v-model="item.answer"
-              :optionValue="option.value"
-            ></custom-checkbox>
-            <child-question
-              v-if="option.chidQuestions"
-              :questions="option.chidQuestions"
+          <div v-if="item.qsType === types.SignleChoice">
+            <div
+              class="question-option"
+              v-for="option in item.options"
+              :key="option.value"
             >
-            </child-question>
+              <custom-checkbox
+                type="single"
+                :label="option.label"
+                v-model="item.answer"
+                :optionValue="option.value"
+              ></custom-checkbox>
+              <child-question
+                v-if="option.chidQuestions"
+                :questions="option.chidQuestions"
+              >
+              </child-question>
+            </div>
+          </div>
+
+          <div v-if="item.qsType === types.MultipleChoice">
+            <div
+              class="question-option"
+              v-for="option in item.options"
+              :key="option.value"
+            >
+              <custom-checkbox
+                :label="option.label"
+                v-model="item.answer"
+                :optionValue="option.value"
+              ></custom-checkbox>
+              <child-question
+                v-if="option.chidQuestions"
+                :questions="option.chidQuestions"
+              >
+              </child-question>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Action -->
     <button v-on:click="saveQuestions()" class="btn-submit">Lưu</button>
+
+    <!-- Dialog -->
     <div v-if="showDialog" class="cts-dialog-container">
       <div class="cts-dialog-backdrop"></div>
       <div class="cts-dialog-wrap" v-on:click="popupOutside($event)">
@@ -76,6 +90,7 @@
           <div>
             <add-edit-question
               :question="currentQuestion"
+              :groups="this.simpleGroups"
               v-on:save-question="editQuestion($event)"
               v-on:add-question="addQuestion($event)"
               v-on:delete-question="deleteQuestion($event)"
@@ -93,6 +108,7 @@ import CustomCheckbox from "./CustomCheckbox.vue";
 import AddEditQuestion from "./AddEditQuestion.vue";
 import { data } from "./mockData";
 import { QuestionType } from "./surveyTypes";
+
 export default {
   components: { ChildQuestion, CustomCheckbox, AddEditQuestion },
   name: "Survey",
@@ -102,27 +118,35 @@ export default {
   //       required: false,
   //     },
   //   },
-  data: function() {
-    console.log("object", data);
-    const convertedQuestion = this.convertQuestion(data);
+  data: function () {
+    // console.log("object", data);
+    // const convertedQuestion = this.convertQuestion(data);
+    const convertedGroups = data.map(x => {
+      return {
+        group: x.group,
+        questions: this.convertQuestion(x.questions),
+      };
+    });
     return {
       types: QuestionType,
-      questions: convertedQuestion,
+      groups: convertedGroups,
+      simpleGroups: convertedGroups.map(x => x.group),
       showDialog: false,
       currentQuestion: null,
     };
   },
   methods: {
-    showChildQuestion: function(question, option) {
+    showChildQuestion: function (question, option) {
       if (question.qsType == QuestionType.MultipleChoice) {
         return option.chidQuestions && question.answer.includes(option.value);
       }
       return option.chidQuestions && question.answer === option.value;
     },
-    convertQuestion: function(questions) {
-      const convertedQuestion = questions.map((item) => {
+    convertQuestion: function (questions) {
+      const convertedQuestion = questions.map((item, index) => {
         return {
           ...item,
+          id: index,
           answer:
             item.qsType === QuestionType.Text ||
             item.qsType === QuestionType.SignleChoice
@@ -135,21 +159,21 @@ export default {
       });
       return convertedQuestion;
     },
-    popupOutside: function(event) {
+    popupOutside: function (event) {
       if (!event.target.closest(".cts-dialog")) {
         this.closeDialog();
       }
     },
-    openDialog: function(question) {
+    openDialog: function (question) {
       this.showDialog = true;
       if (question) {
         this.currentQuestion = question;
       }
     },
-    closeDialog: function() {
+    closeDialog: function () {
       this.showDialog = false;
     },
-    editQuestion: function(question) {
+    editQuestion: function (question) {
       const index = this.questions.findIndex((x) => x.id === question.id);
       if (index) {
         this.questions[index] = question;
@@ -157,30 +181,31 @@ export default {
 
       this.closeDialog();
     },
-    addQuestion: function(question) {
+    addQuestion: function (question) {
+      if(question.qsGroup < 0 || question.qsGroup > this.groups.length -1) {
+        this.closeDialog();
+        return;
+      }
       const newQuestion = {
         ...question,
-        id: `${this.questions.length}`,
+        id: this.groups[question.qsGroup].questions.length + 1,
       };
-      const check = this.questions.findIndex((x) => x.id === newQuestion.id);
-      if (check === -1) {
-        this.questions.push(newQuestion);
-      }
+      this.groups[question.qsGroup].questions.push(newQuestion);
       this.closeDialog();
     },
-    openAddNewQuestion: function() {
+    openAddNewQuestion: function () {
       this.currentQuestion = null;
       this.openDialog();
     },
-    deleteQuestion: function(id) {
+    deleteQuestion: function (id) {
       if (id) {
         const index = this.questions.findIndex((x) => x.id === id);
         this.questions.splice(index, 1);
       }
       this.closeDialog();
     },
-    saveQuestions: function() {
-      console.log('object', this.questions);
+    saveQuestions: function () {
+      console.log("object", this.questions);
       this.$emit("save-question", this.questions);
     },
   },
@@ -203,15 +228,28 @@ h1 {
   text-align: right;
 }
 
+.group-container {
+  margin-bottom: 30px;
+}
+
+.group-header {
+  padding: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  background-color: #bcdff5;
+}
+
 .question-container {
   margin-top: 10px;
   margin-bottom: 10px;
 }
 
 .quetion-label {
-  padding: 20px;
+  padding: 10px;
   font-weight: bold;
-  font-size: 20px;
+  font-size: 18px;
   border-bottom: 1px solid #0091ea;
   color: #0091ea;
   text-align: left;
@@ -226,6 +264,7 @@ h1 {
   width: 30px;
   height: 30px;
   line-height: 30px;
+  font-size: 15px;
   display: inline-block;
   margin-right: 20px;
   border-radius: 50%;
@@ -292,8 +331,7 @@ h1 {
   height: 100vh;
 }
 
-.cts-dialog-virtual {
-}
+
 
 .cts-dialog {
   background: #fff;

@@ -1,5 +1,15 @@
 <template>
   <div>
+
+    <div v-if="!question" class="question-group">
+      <label> Nhóm: </label>
+      <div class="question-answer">
+        <select class="popup-input options-input" v-model="questionGroup">
+          <option v-for="(group, index) in groups" :key="group" :value="index">{{group}}</option>
+        </select>
+      </div>
+    </div>
+
     <div class="question-group">
       <label> Câu hỏi: </label>
       <div class="question-answer">
@@ -81,9 +91,14 @@ export default {
       type: Object,
       required: false,
     },
+    groups: {
+      type: Array,
+      required: false
+    }
   },
   data: function () {
     return {
+      questionGroup: 0,
       questionName: this.question ? this.question.question : '',
       questionNameError: false,
       questionType: this.question ? `${this.question.required}` : 'true',
@@ -106,20 +121,22 @@ export default {
       }
     },
     addOrEditQuestion: function () {
-      console.log('object', this.question);
+
       const question = {
         id: this.question ? this.question.id : null,
+        qsGroup: this.questionGroup,
         qsType: this.questionStyle,
         question: this.questionName,
         required: this.questionType === 'true' ? true : false,
         answer: this.questionStyle === 'MultipleChoice' ? [] : '',
-        options: this.options.map(x => {
+        options: this.questionStyle !== 'Text' ? this.options.map(x => {
           return {
             label: x.label,
             value: x.label,
           }
-        })
+        }) : null,
       }
+      console.log('999999999', question);
       this.question ? this.$emit('save-question', question) : this.$emit('add-question', question);
     },
     deleteQuestion: function () {

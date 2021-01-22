@@ -1,89 +1,131 @@
 import { QuestionType } from "./surveyTypes";
 export const data = [
   {
-    id: 0,
-    qsType: QuestionType.Text,
-    question: "Bạn tên gì?",
-    required: true,
-    options: null,
-    chidQuestions: null,
-  },
-  {
-    id: 1,
-    qsType: QuestionType.Text,
-    question: "Bạn làm nghề gì?",
-    required: false,
-    options: null,
-    chidQuestions: null,
-  },
-  {
-    id: 2,
-    qsType: QuestionType.SignleChoice,
-    question: "Bạn học ở đâu?",
-    required: true,
-    options: [
+    group: 'Thông tin cá nhân',
+    questions: [
       {
-        label: "Đại học kinh tế",
-        value: "0",
-        chidQuestions: [
+        qsType: QuestionType.Text,
+        question: "Bạn tên gì?",
+        required: true,
+        options: null,
+        chidQuestions: null,
+      },
+      {
+        qsType: QuestionType.Text,
+        question: "Bạn làm nghề gì?",
+        required: false,
+        options: null,
+        chidQuestions: null,
+      },
+      {
+        qsType: QuestionType.SignleChoice,
+        question: "Bạn học ở đâu?",
+        required: true,
+        options: [
           {
-            qsType: QuestionType.SignleChoice,
-            question: "Bạn học khoa nào",
-            options: [
+            label: "Đại học kinh tế",
+            value: "0",
+            chidQuestions: [
               {
-                label: "Khoa công nghệ thông tin",
-                value: "0",
+                qsType: QuestionType.SignleChoice,
+                question: "Bạn học khoa nào",
+                options: [
+                  {
+                    label: "Khoa công nghệ thông tin",
+                    value: "0",
+                  },
+                  {
+                    label: "Khoa kế toán",
+                    value: "1",
+                  },
+                ],
               },
+            ],
+          },
+          {
+            label: "Đại học bách khoa",
+            value: "1",
+            chidQuestions: [
               {
-                label: "Khoa kế toán",
-                value: "1",
+                qsType: QuestionType.SignleChoice,
+                question: "Bạn học khoa nào",
+                options: [
+                  {
+                    label: "Khoa công nghệ thông tin",
+                    value: "0",
+                  },
+                  {
+                    label: "Khoa xây dựng",
+                    value: "1",
+                  },
+                ],
               },
             ],
           },
         ],
       },
       {
-        id: 3,
-        label: "Đại học bách khoa",
-        value: "1",
-        chidQuestions: [
+        qsType: QuestionType.MultipleChoice,
+        question: "Bạn đi xe gì?",
+        required: true,
+        options: [
           {
-            qsType: QuestionType.SignleChoice,
-            question: "Bạn học khoa nào",
-            options: [
-              {
-                label: "Khoa công nghệ thông tin",
-                value: "0",
-              },
-              {
-                label: "Khoa xây dựng",
-                value: "1",
-              },
-            ],
+            label: "Đi xe máy",
+            value: "0",
+          },
+          {
+            label: "Đi ô tô",
+            value: "1",
+          },
+          {
+            label: "Đi bộ",
+            value: "2",
           },
         ],
       },
-    ],
+    ]   
   },
   {
-    id: 4,
-    qsType: QuestionType.MultipleChoice,
-    name: "xe",
-    question: "Bạn đi xe gì?",
-    required: true,
-    options: [
+    group: 'Kỹ năng (Technical)',
+    questions: [
       {
-        label: "Đi xe máy",
-        value: "0",
+        qsType: QuestionType.SignleChoice,
+        question: "Số năm kinh nghiệm?",
+        required: true,
+        options: [
+          {
+            label: "1 năm",
+            value: "0",
+          },
+          {
+            label: "2 năm",
+            value: "1",
+          },
+          {
+            label: "3 năm trở lên",
+            value: "3",
+          },
+        ],
       },
       {
-        label: "Đi ô tô",
-        value: "1",
+        qsType: QuestionType.MultipleChoice,
+        question: "Library/Framework",
+        required: true,
+        options: [
+          {
+            label: "Angular",
+            value: "0",
+          },
+          {
+            label: "Reactjs",
+            value: "1",
+          },
+          {
+            label: "Vuejs",
+            value: "2",
+          },
+        ],
       },
-      {
-        label: "Đi bộ",
-        value: "2",
-      },
-    ],
-  },
-];
+    ]   
+  }
+]
