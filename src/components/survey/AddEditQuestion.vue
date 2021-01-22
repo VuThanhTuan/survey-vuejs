@@ -3,7 +3,7 @@
     <div class="question-group">
       <label> Câu hỏi: </label>
       <div class="question-answer">
-        <input class="popup-input options-input" v-model="question.label" />
+        <input class="popup-input options-input" v-model="questionName" />
       </div>
     </div>
 
@@ -13,13 +13,13 @@
         <custom-checkbox
           type="single"
           v-model="questionType"
-          optionValue="required"
+          optionValue="true"
           label="Bắt buộc"
         ></custom-checkbox>
         <custom-checkbox
           type="single"
           v-model="questionType"
-          optionValue="not required"
+          optionValue="false"
           label="Không bắt buộc"
         ></custom-checkbox>
       </div>
@@ -37,13 +37,13 @@
         <custom-checkbox
           type="single"
           v-model="questionStyle"
-          optionValue="Single Choice"
+          optionValue="SignleChoice"
           label="Single Choice"
         ></custom-checkbox>
         <custom-checkbox
           type="single"
           v-model="questionStyle"
-          optionValue="Multiple Choice"
+          optionValue="MultipleChoice"
           label="Multiple Choice"
         ></custom-checkbox>
       </div>
@@ -51,7 +51,7 @@
 
     <div
       v-if="
-        questionStyle === 'Single Choice' || questionStyle === 'Multiple Choice'
+        questionStyle === 'SignleChoice' || questionStyle === 'MultipleChoice'
       "
       class="question-group"
     >
@@ -60,14 +60,14 @@
         <i class="fas fa-plus" v-on:click="addOption()"></i>
       </div>
       <div v-for="(item, index) in options" :key="index">
-        <input class="popup-input options-input" v-model="options[index]" />
+        <input class="popup-input options-input" v-model="options[index].label" />
         <i v-if="index !== 0" v-on:click="removeOption(index)" class="fas fa-trash-alt"></i>
       </div>
     </div>
 
     <div class="popup-action">
-      <button class="btn-popup">Chấp nhận</button>
-      <button class="btn-popup"><i class="fas fa-times"></i>Xóa câu hỏi</button>
+      <button v-on:click="addOrEditQuestion()" class="btn-popup">Chấp nhận</button>
+      <button v-if="question" v-on:click="deleteQuestion()" class="btn-popup"><i class="fas fa-times"></i>Xóa câu hỏi</button>
     </div>
   </div>
 </template>
@@ -79,19 +79,24 @@ export default {
   props: {
     question: {
       type: Object,
-      required: true,
+      required: false,
     },
   },
   data: function () {
     return {
-      questionType: "required",
-      questionStyle: "Text",
-      options: [""],
+      questionName: this.question ? this.question.question : '',
+      questionNameError: false,
+      questionType: this.question ? `${this.question.required}` : 'true',
+      questionStyle: this.question ? this.question.qsType : "Text",
+      options: this.question && this.question.options ? this.question.options.map(x => { return {
+        label: x.label,
+        error: false,
+      }}) : [{label: '', error: false}],
     };
   },
   methods: {
     addOption: function () {
-      this.options.push("");
+      this.options.push({label: '', error: false});
     },
     removeOption: function (index) {
       if (this.options.length > 1) {
@@ -100,6 +105,37 @@ export default {
         }, 100);
       }
     },
+    addOrEditQuestion: function () {
+      console.log('object', this.question);
+      const question = {
+        id: this.question ? this.question.id : null,
+        qsType: this.questionStyle,
+        question: this.questionName,
+        required: this.questionType === 'true' ? true : false,
+        answer: this.questionStyle === 'MultipleChoice' ? [] : '',
+        options: this.options.map(x => {
+          return {
+            label: x.label,
+            value: x.label,
+          }
+        })
+      }
+      this.question ? this.$emit('save-question', question) : this.$emit('add-question', question);
+    },
+    deleteQuestion: function () {
+      this.$emit('delete-question', this.question.id)
+    },
+    validateForm: function() {
+      if(!this.questionName) {
+        this.questionNameError = true;
+      }
+
+      if(this.questionStyle === 'SignleChoice' || this.questionStyle === 'MultipleChoice' ) {
+        this.options
+      }
+
+      return true;
+    }
   },
 };
 </script>

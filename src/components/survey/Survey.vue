@@ -1,5 +1,11 @@
 <template>
   <div class="survey-container">
+    <h1>Khảo Sát</h1>
+    <div class="survey-header">
+      <button v-on:click="openAddNewQuestion()" class="btn-submit">
+        Thêm câu hỏi
+      </button>
+    </div>
     <div
       class="question-container"
       v-for="(item, index) in questions"
@@ -7,7 +13,8 @@
     >
       <div class="quetion-label">
         <div class="question-num">{{ index + 1 }}</div>
-        {{ item.question }} <span v-if="item.required" class="question-required">*</span>
+        {{ item.question }}
+        <span v-if="item.required" class="question-required">*</span>
         <i v-on:click="openDialog(item)" class="fas fa-edit"></i>
       </div>
 
@@ -18,16 +25,19 @@
         </div>
 
         <div v-if="item.qsType === types.SignleChoice">
-          <div class="question-option" v-for="option in item.options" :key="option.value">
+          <div
+            class="question-option"
+            v-for="option in item.options"
+            :key="option.value"
+          >
             <custom-checkbox
-              :id="`${item.name}${option.value}`"
               type="single"
               :label="option.label"
               v-model="item.answer"
               :optionValue="option.value"
             ></custom-checkbox>
             <child-question
-              v-if="showChildQuestion(item, option)"
+              v-if="option.chidQuestions"
               :questions="option.chidQuestions"
             >
             </child-question>
@@ -35,15 +45,18 @@
         </div>
 
         <div v-if="item.qsType === types.MultipleChoice">
-          <div class="question-option" v-for="option in item.options" :key="option.value">
+          <div
+            class="question-option"
+            v-for="option in item.options"
+            :key="option.value"
+          >
             <custom-checkbox
-              :id="`${item.name}${option.value}`"
               :label="option.label"
               v-model="item.answer"
               :optionValue="option.value"
             ></custom-checkbox>
             <child-question
-              v-if="showChildQuestion(item, option)"
+              v-if="option.chidQuestions"
               :questions="option.chidQuestions"
             >
             </child-question>
@@ -51,14 +64,22 @@
         </div>
       </div>
     </div>
-    <button class="btn-submit">Thêm Câu Hỏi</button>
+    <button v-on:click="saveQuestions()" class="btn-submit">Lưu</button>
     <div v-if="showDialog" class="cts-dialog-container">
       <div class="cts-dialog-backdrop"></div>
       <div class="cts-dialog-wrap" v-on:click="popupOutside($event)">
-        <div ref="cts-dialog" v-bind:class="{ 'dl-hidden': true, 'cts-dialog': showDialog }" >
-          <h3>Sửa Câu Hỏi</h3>
-          <div >
-            <edit-question :question="currentQuestion"></edit-question>
+        <div
+          ref="cts-dialog"
+          v-bind:class="{ 'dl-hidden': true, 'cts-dialog': showDialog }"
+        >
+          <h3>{{ currentQuestion ? "Sửa Câu Hỏi" : "Thêm câu hỏi" }}</h3>
+          <div>
+            <add-edit-question
+              :question="currentQuestion"
+              v-on:save-question="editQuestion($event)"
+              v-on:add-question="addQuestion($event)"
+              v-on:delete-question="deleteQuestion($event)"
+            ></add-edit-question>
           </div>
         </div>
       </div>
@@ -69,11 +90,11 @@
 <script>
 import ChildQuestion from "./ChildQuestion.vue";
 import CustomCheckbox from "./CustomCheckbox.vue";
-import EditQuestion from './EditQuestion.vue';
+import AddEditQuestion from "./AddEditQuestion.vue";
 import { data } from "./mockData";
 import { QuestionType } from "./surveyTypes";
 export default {
-  components: { ChildQuestion, CustomCheckbox, EditQuestion },
+  components: { ChildQuestion, CustomCheckbox, AddEditQuestion },
   name: "Survey",
   //   props: {
   //     data: {
@@ -82,6 +103,7 @@ export default {
   //     },
   //   },
   data: function() {
+    console.log("object", data);
     const convertedQuestion = this.convertQuestion(data);
     return {
       types: QuestionType,
@@ -90,9 +112,6 @@ export default {
       currentQuestion: null,
     };
   },
-  // created: function() {
-  //   document.addEventListener('click', )
-  // },
   methods: {
     showChildQuestion: function(question, option) {
       if (question.qsType == QuestionType.MultipleChoice) {
@@ -117,19 +136,52 @@ export default {
       return convertedQuestion;
     },
     popupOutside: function(event) {
-      if (!event.target.closest('.cts-dialog')) {
+      if (!event.target.closest(".cts-dialog")) {
         this.closeDialog();
       }
     },
     openDialog: function(question) {
       this.showDialog = true;
-      if(question) {
+      if (question) {
         this.currentQuestion = question;
-
       }
     },
     closeDialog: function() {
       this.showDialog = false;
+    },
+    editQuestion: function(question) {
+      const index = this.questions.findIndex((x) => x.id === question.id);
+      if (index) {
+        this.questions[index] = question;
+      }
+
+      this.closeDialog();
+    },
+    addQuestion: function(question) {
+      const newQuestion = {
+        ...question,
+        id: `${this.questions.length}`,
+      };
+      const check = this.questions.findIndex((x) => x.id === newQuestion.id);
+      if (check === -1) {
+        this.questions.push(newQuestion);
+      }
+      this.closeDialog();
+    },
+    openAddNewQuestion: function() {
+      this.currentQuestion = null;
+      this.openDialog();
+    },
+    deleteQuestion: function(id) {
+      if (id) {
+        const index = this.questions.findIndex((x) => x.id === id);
+        this.questions.splice(index, 1);
+      }
+      this.closeDialog();
+    },
+    saveQuestions: function() {
+      console.log('object', this.questions);
+      this.$emit("save-question", this.questions);
     },
   },
 };
@@ -141,6 +193,16 @@ export default {
   text-align: left;
   font-size: 15px;
 }
+
+h1 {
+  font-size: 48px;
+  text-align: center;
+}
+
+.survey-header {
+  text-align: right;
+}
+
 .question-container {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -231,20 +293,20 @@ export default {
 }
 
 .cts-dialog-virtual {
-  
 }
 
 .cts-dialog {
   background: #fff;
-  display: block!important;
+  display: block !important;
   width: 600px;
   min-height: 300px;
   max-height: 90%;
   padding: 20px;
   overflow-y: auto;
-  -webkit-animation: slide-down .3s ease-out;
-  -moz-animation: slide-down .3s ease-out;
-  box-shadow: 0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12);
+  -webkit-animation: slide-down 0.3s ease-out;
+  -moz-animation: slide-down 0.3s ease-out;
+  box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2),
+    0 24px 38px 3px rgba(0, 0, 0, 0.14), 0 9px 46px 8px rgba(0, 0, 0, 0.12);
   border-radius: 4px;
 }
 
@@ -258,12 +320,24 @@ export default {
 }
 
 @-webkit-keyframes slide-down {
-      0% { opacity: 0; -webkit-transform: translateY(-50%); }   
-    100% { opacity: 1; -webkit-transform: translateY(0); }
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(-50%);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+  }
 }
 @-moz-keyframes slide-down {
-      0% { opacity: 0; -moz-transform: translateY(-50%); }   
-    100% { opacity: 1; -moz-transform: translateY(0); }
+  0% {
+    opacity: 0;
+    -moz-transform: translateY(-50%);
+  }
+  100% {
+    opacity: 1;
+    -moz-transform: translateY(0);
+  }
 }
 
 .dl-hidden {
