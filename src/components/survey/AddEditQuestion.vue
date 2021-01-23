@@ -121,10 +121,9 @@ export default {
       }
     },
     addOrEditQuestion: function () {
-
       const question = {
         id: this.question ? this.question.id : null,
-        qsGroup: this.questionGroup,
+        qsGroup: this.question ? this.question.qsGroup : this.questionGroup,
         qsType: this.questionStyle,
         question: this.questionName,
         required: this.questionType === 'true' ? true : false,
@@ -136,7 +135,6 @@ export default {
           }
         }) : null,
       }
-      console.log('999999999', question);
       this.question ? this.$emit('save-question', question) : this.$emit('add-question', question);
     },
     deleteQuestion: function () {
@@ -148,7 +146,12 @@ export default {
       }
 
       if(this.questionStyle === 'SignleChoice' || this.questionStyle === 'MultipleChoice' ) {
-        this.options
+        this.options.map(option => {
+          return {
+            label: option.label,
+            error: !!option.label,
+          }
+        });
       }
 
       return true;

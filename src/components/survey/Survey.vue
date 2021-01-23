@@ -121,10 +121,10 @@ export default {
   data: function () {
     // console.log("object", data);
     // const convertedQuestion = this.convertQuestion(data);
-    const convertedGroups = data.map(x => {
+    const convertedGroups = data.map((x, index) => {
       return {
         group: x.group,
-        questions: this.convertQuestion(x.questions),
+        questions: this.convertQuestion(x.questions, index),
       };
     });
     return {
@@ -142,11 +142,12 @@ export default {
       }
       return option.chidQuestions && question.answer === option.value;
     },
-    convertQuestion: function (questions) {
+    convertQuestion: function (questions, group) {
       const convertedQuestion = questions.map((item, index) => {
         return {
           ...item,
           id: index,
+          qsGroup: group,
           answer:
             item.qsType === QuestionType.Text ||
             item.qsType === QuestionType.SignleChoice
@@ -174,11 +175,16 @@ export default {
       this.showDialog = false;
     },
     editQuestion: function (question) {
-      const index = this.questions.findIndex((x) => x.id === question.id);
-      if (index) {
-        this.questions[index] = question;
+      if(question.qsGroup < 0 || question.qsGroup > this.groups.length -1) {
+        this.closeDialog();
+        return;
       }
-
+      const questions = this.groups[question.qsGroup].questions
+      const index = questions.findIndex((x) => x.id === question.id);
+      console.log('object', index);
+      if (index !== -1) {
+        questions[index] = question;
+      }
       this.closeDialog();
     },
     addQuestion: function (question) {
