@@ -38,7 +38,7 @@ export default {
       required: false,
     },
     optionValue: {
-      type: String,
+      type: [Number, String, Boolean],
       required: false,
     },
     value: {

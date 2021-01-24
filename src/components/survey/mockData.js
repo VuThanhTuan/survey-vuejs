@@ -8,14 +8,12 @@ export const data = [
         question: "Bạn tên gì?",
         required: true,
         options: null,
-        chidQuestions: null,
       },
       {
         qsType: QuestionType.Text,
         question: "Bạn làm nghề gì?",
         required: false,
         options: null,
-        chidQuestions: null,
       },
       {
         qsType: QuestionType.SignleChoice,
@@ -24,7 +22,6 @@ export const data = [
         options: [
           {
             label: "Đại học kinh tế",
-            value: "0",
             chidQuestions: [
               {
                 qsType: QuestionType.SignleChoice,
@@ -32,11 +29,9 @@ export const data = [
                 options: [
                   {
                     label: "Khoa công nghệ thông tin",
-                    value: "0",
                   },
                   {
                     label: "Khoa kế toán",
-                    value: "1",
                   },
                 ],
               },
@@ -52,11 +47,9 @@ export const data = [
                 options: [
                   {
                     label: "Khoa công nghệ thông tin",
-                    value: "0",
                   },
                   {
                     label: "Khoa xây dựng",
-                    value: "1",
                   },
                 ],
               },
@@ -71,15 +64,12 @@ export const data = [
         options: [
           {
             label: "Đi xe máy",
-            value: "0",
           },
           {
             label: "Đi ô tô",
-            value: "1",
           },
           {
             label: "Đi bộ",
-            value: "2",
           },
         ],
       },
@@ -95,15 +85,12 @@ export const data = [
         options: [
           {
             label: "1 năm",
-            value: "0",
           },
           {
             label: "2 năm",
-            value: "1",
           },
           {
             label: "3 năm trở lên",
-            value: "3",
           },
         ],
       },
@@ -114,15 +101,12 @@ export const data = [
         options: [
           {
             label: "Angular",
-            value: "0",
           },
           {
             label: "Reactjs",
-            value: "1",
           },
           {
             label: "Vuejs",
-            value: "2",
           },
         ],
       },

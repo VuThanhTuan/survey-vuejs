@@ -6,7 +6,8 @@
       :key="item.question"
     >
       <div class="quetion-label">
-        {{ item.question }}
+        <span>{{ item.question }}</span>
+        <i v-on:click="editChildQuestion(item)" class="fas fa-edit"></i>
       </div>
 
       <div class="question-answer">
@@ -17,20 +18,24 @@
 
         <div v-if="item.qsType === types.MultipleChoice">
           <div v-for="option in item.options" :key="option.value">
-            
-            <custom-checkbox :id="`${item.name}${option.value}`" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
-
-             <!-- <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
-            </child-question> -->
+            <custom-checkbox
+              :id="`${item.name}${option.value}`"
+              :label="option.label"
+              v-model="item.answer"
+              :optionValue="option.value"
+            ></custom-checkbox>
           </div>
         </div>
 
         <div v-if="item.qsType === types.SignleChoice">
           <div v-for="option in item.options" :key="option.value">
-            <custom-checkbox :id="`${item.name}${option.value}`" type="single" :label="option.label" v-model="item.answer" :optionValue="option.value"></custom-checkbox>
-
-             <!-- <child-question v-if="showChildQuestion(item, option)" :questions="option.chidQuestions">
-            </child-question> -->
+            <custom-checkbox
+              :id="`${item.name}${option.value}`"
+              type="single"
+              :label="option.label"
+              v-model="item.answer"
+              :optionValue="option.value"
+            ></custom-checkbox>
           </div>
         </div>
       </div>
@@ -39,7 +44,7 @@
 </template>
 
 <script>
-import CustomCheckbox from './CustomCheckbox.vue';
+import CustomCheckbox from "./CustomCheckbox.vue";
 import { QuestionType } from "./surveyTypes";
 export default {
   components: { CustomCheckbox },
@@ -50,30 +55,42 @@ export default {
       required: false,
     },
   },
+  computed: {
+    convertedQuestion: function() {
+      console.log('computed', this.questions);
+      return this.convertQuestion(this.questions);
+    }
+  },
   data: function () {
-    const convertedQuestion = this.convertQuestion(this.questions);
     return {
       types: QuestionType,
-      convertedQuestion,
     };
   },
-   methods: {
+  methods: {
     showChildQuestion: function (question, option) {
-      if(question.qsType == QuestionType.MultipleChoice) {
+      if (question.qsType == QuestionType.MultipleChoice) {
         return option.chidQuestions && question.answer.includes(option.value);
       }
       return option.chidQuestions && question.answer === option.value;
     },
     convertQuestion: function (questions) {
-      const convertedQuestion = questions.map((item) => {
+      const convertedQuestion = questions.map((item, index) => {
         return {
           ...item,
-          answer: item.qsType === QuestionType.Text || item.qsType === QuestionType.SignleChoice ? '' : [],
-          chidQuestions: item.chidQuestions ? this.convertQuestion(item.chidQuestions) : null,
+          id: index,
+          answer:
+            item.qsType === QuestionType.Text ||
+            item.qsType === QuestionType.SignleChoice
+              ? ""
+              : [],
         };
       });
       return convertedQuestion;
     },
+    editChildQuestion: function(item) {
+      console.log('test', item);
+      this.$emit('edit-question', item);
+    }
   },
 };
 </script>
@@ -89,8 +106,10 @@ export default {
 }
 
 .quetion-label {
+  display: flex;
+  justify-content: space-between;
   padding: 10px;
-  border-bottom: 1px solid #74bde4;
+  border-bottom: 1px solid #212121;
   text-align: left;
 }
 
@@ -108,5 +127,9 @@ export default {
   padding: 5px 8px;
   border: 1px solid #000;
   border-radius: 5px;
+}
+
+i {
+  cursor: pointer;
 }
 </style>

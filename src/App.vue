@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    <Servey/>
+    <Servey :data="data" />
   </div>
 </template>
 
 <script>
 import Servey from './components/survey/Survey'
-
+import { data } from './components/survey/mockData'
 export default {
   name: 'App',
   components: {
     Servey
+  },
+  data: function() {
+    return {
+      data
+    }
   }
 }
 </script>

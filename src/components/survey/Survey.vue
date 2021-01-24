@@ -1,8 +1,12 @@
 <template>
   <div class="survey-container">
-    <h1>Khảo Sát</h1>
+    <h1>Quản lý câu hỏi</h1>
     <div class="survey-header">
-      <button v-on:click="openAddNewQuestion()" class="btn-submit" style="margin-right: 10px">
+      <button
+        v-on:click="openAddNewGroup()"
+        class="btn-submit"
+        style="margin-right: 10px"
+      >
         Thêm nhóm
       </button>
       <button v-on:click="openAddNewQuestion()" class="btn-submit">
@@ -11,8 +15,15 @@
     </div>
 
     <!-- Question -->
-    <div class="group-container" v-for="group in groups" :key="group.group">
-      <div class="group-header">
+    <div
+      class="group-container"
+      v-for="(group, index) in groups"
+      :key="group.group"
+    >
+      <div
+        v-on:click="openEditGroup({ id: index, group: group.group })"
+        class="group-header"
+      >
         {{ group.group }}
       </div>
       <div
@@ -39,17 +50,31 @@
               v-for="option in item.options"
               :key="option.value"
             >
+              <i
+                class="fas fa-plus question-child-add"
+                v-on:click="openChildQuestion(item, option.value, item.qsGroup)"
+              ></i>
               <custom-checkbox
                 type="single"
                 :label="option.label"
                 v-model="item.answer"
                 :optionValue="option.value"
               ></custom-checkbox>
-              <child-question
-                v-if="option.chidQuestions"
-                :questions="option.chidQuestions"
-              >
-              </child-question>
+              <div class="child-question-box">
+                <child-question
+                  v-if="option.chidQuestions"
+                  :questions="option.chidQuestions"
+                  v-on:edit-question="
+                    openEditChildQuestion(
+                      $event,
+                      item.qsGroup,
+                      item,
+                      option.value
+                    )
+                  "
+                >
+                </child-question>
+              </div>
             </div>
           </div>
 
@@ -64,11 +89,21 @@
                 v-model="item.answer"
                 :optionValue="option.value"
               ></custom-checkbox>
-              <child-question
-                v-if="option.chidQuestions"
-                :questions="option.chidQuestions"
-              >
-              </child-question>
+              <div class="child-question-box">
+                <child-question
+                  v-if="option.chidQuestions"
+                  :questions="option.chidQuestions"
+                  v-on:edit-question="
+                    openEditChildQuestion(
+                      $event,
+                      item.qsGroup,
+                      item,
+                      option.value
+                    )
+                  "
+                >
+                </child-question>
+              </div>
             </div>
           </div>
         </div>
@@ -82,20 +117,33 @@
     <div v-if="showDialog" class="cts-dialog-container">
       <div class="cts-dialog-backdrop"></div>
       <div class="cts-dialog-wrap" v-on:click="popupOutside($event)">
-        <div
-          ref="cts-dialog"
-          v-bind:class="{ 'dl-hidden': true, 'cts-dialog': showDialog }"
-        >
-          <h3>{{ currentQuestion ? "Sửa Câu Hỏi" : "Thêm câu hỏi" }}</h3>
-          <div>
-            <add-edit-question
-              :question="currentQuestion"
-              :groups="this.simpleGroups"
-              v-on:save-question="editQuestion($event)"
-              v-on:add-question="addQuestion($event)"
-              v-on:delete-question="deleteQuestion($event)"
-            ></add-edit-question>
-          </div>
+        <div ref="cts-dialog" class="cts-dialog">
+          <add-edit-question
+            v-if="showDialog"
+            :question="currentQuestion"
+            :groups="this.simpleGroups"
+            :parentQuestion="parentQuestion"
+            v-on:save-question="editQuestion($event)"
+            v-on:save-child-question="editChildQuestion($event)"
+            v-on:add-question="addQuestion($event)"
+            v-on:add-child-question="addChildQuestion($event)"
+            v-on:delete-question="deleteQuestion($event)"
+            v-on:delete-child-question="deleteChildQuestion($event)"
+          ></add-edit-question>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showDialogGroup" class="cts-dialog-container">
+      <div class="cts-dialog-backdrop"></div>
+      <div class="cts-dialog-wrap" v-on:click="popupOutside($event)">
+        <div ref="cts-dialog" class="cts-dialog">
+          <add-edit-group
+            :group="currentGroup"
+            v-on:add-group="addNewGroup($event)"
+            v-on:edit-group="editGroup($event)"
+            v-on:delete-group="deleteGroup($event)"
+          ></add-edit-group>
         </div>
       </div>
     </div>
@@ -106,22 +154,20 @@
 import ChildQuestion from "./ChildQuestion.vue";
 import CustomCheckbox from "./CustomCheckbox.vue";
 import AddEditQuestion from "./AddEditQuestion.vue";
-import { data } from "./mockData";
 import { QuestionType } from "./surveyTypes";
+import AddEditGroup from "./AddEditGroup.vue";
 
 export default {
-  components: { ChildQuestion, CustomCheckbox, AddEditQuestion },
+  components: { ChildQuestion, CustomCheckbox, AddEditQuestion, AddEditGroup },
   name: "Survey",
-  //   props: {
-  //     data: {
-  //       type: Array,
-  //       required: false,
-  //     },
-  //   },
+  props: {
+    data: {
+      type: Array,
+      required: false,
+    },
+  },
   data: function () {
-    // console.log("object", data);
-    // const convertedQuestion = this.convertQuestion(data);
-    const convertedGroups = data.map((x, index) => {
+    const convertedGroups = this.data.map((x, index) => {
       return {
         group: x.group,
         questions: this.convertQuestion(x.questions, index),
@@ -130,10 +176,18 @@ export default {
     return {
       types: QuestionType,
       groups: convertedGroups,
-      simpleGroups: convertedGroups.map(x => x.group),
+      simpleGroups: convertedGroups.map((x) => x.group),
       showDialog: false,
+      showDialogGroup: false,
       currentQuestion: null,
+      parentQuestion: null,
+      currentGroup: null,
     };
+  },
+  watch: {
+    groups: function (val) {
+      this.simpleGroups = val.map((x) => x.group);
+    },
   },
   methods: {
     showChildQuestion: function (question, option) {
@@ -153,8 +207,17 @@ export default {
             item.qsType === QuestionType.SignleChoice
               ? ""
               : [],
-          chidQuestions: item.chidQuestions
-            ? this.convertQuestion(item.chidQuestions)
+          options: item.options
+            ? item.options.map((x, opIndex) => {
+                return {
+                  ...x,
+                  id: opIndex,
+                  value: opIndex,
+                  chidQuestions: x.chidQuestions
+                    ? this.convertQuestion(x.chidQuestions)
+                    : null,
+                };
+              })
             : null,
         };
       });
@@ -163,6 +226,7 @@ export default {
     popupOutside: function (event) {
       if (!event.target.closest(".cts-dialog")) {
         this.closeDialog();
+        this.closeDialogGroup();
       }
     },
     openDialog: function (question) {
@@ -172,23 +236,24 @@ export default {
       }
     },
     closeDialog: function () {
+      this.currentQuestion = null;
       this.showDialog = false;
     },
     editQuestion: function (question) {
-      if(question.qsGroup < 0 || question.qsGroup > this.groups.length -1) {
+      if (question.qsGroup < 0 || question.qsGroup > this.groups.length - 1) {
         this.closeDialog();
         return;
       }
-      const questions = this.groups[question.qsGroup].questions
+      const questions = this.groups[question.qsGroup].questions;
       const index = questions.findIndex((x) => x.id === question.id);
-      console.log('object', index);
+
       if (index !== -1) {
         questions[index] = question;
       }
       this.closeDialog();
     },
     addQuestion: function (question) {
-      if(question.qsGroup < 0 || question.qsGroup > this.groups.length -1) {
+      if (question.qsGroup < 0 || question.qsGroup > this.groups.length - 1) {
         this.closeDialog();
         return;
       }
@@ -200,18 +265,97 @@ export default {
       this.closeDialog();
     },
     openAddNewQuestion: function () {
-      this.currentQuestion = null;
       this.openDialog();
     },
-    deleteQuestion: function (id) {
-      if (id) {
-        const index = this.questions.findIndex((x) => x.id === id);
-        this.questions.splice(index, 1);
-      }
+    deleteQuestion: function (data) {
+      this.groups[data.qsGroup].questions.splice(data.id, 1);
       this.closeDialog();
     },
+    openChildQuestion: function (question, option, group) {
+      this.parentQuestion = {
+        id: question.id,
+        option,
+        group,
+      };
+      this.openDialog();
+    },
+    openEditChildQuestion: function (question, group, parent, option) {
+      this.parentQuestion = {
+        id: parent.id,
+        option,
+        group,
+      };
+      this.currentQuestion = question;
+      this.openDialog();
+    },
+    addChildQuestion: function (question) {
+      const parentQs = this.groups[question.parentQuestion.group].questions[
+        question.parentQuestion.id
+      ];
+      if (!parentQs.options[question.parentQuestion.option].chidQuestions) {
+        parentQs.options[question.parentQuestion.option].chidQuestions = [];
+      }
+      const childList =
+        parentQs.options[question.parentQuestion.option].chidQuestions;
+      const newQuestion = {
+        ...question,
+        id: childList.length + 1,
+      };
+      childList.push(newQuestion);
+      this.closeDialog();
+    },
+    editChildQuestion: function (question) {
+      const parentQs = this.groups[question.parentQuestion.group].questions[
+        question.parentQuestion.id
+      ];
+      if (!parentQs.options[question.parentQuestion.option].chidQuestions) {
+        parentQs.options[question.parentQuestion.option].chidQuestions = [];
+      }
+      const childList = [
+        ...parentQs.options[question.parentQuestion.option].chidQuestions,
+      ];
+      const newQuestion = {
+        ...question,
+      };
+      childList[question.id] = newQuestion;
+      parentQs.options[
+        question.parentQuestion.option
+      ].chidQuestions = childList;
+      this.closeDialog();
+    },
+    deleteChildQuestion: function (data) {
+      const parentQs = this.groups[data.parentQuestion.group].questions[
+        data.parentQuestion.id
+      ];
+      const childList =
+        parentQs.options[data.parentQuestion.option].chidQuestions;
+      childList.splice(data.id, 1);
+      this.closeDialog();
+    },
+    openAddNewGroup: function () {
+      this.showDialogGroup = true;
+    },
+    addNewGroup: function (group) {
+      this.groups.push({ group, questions: [] });
+      this.closeDialogGroup();
+    },
+    openEditGroup: function (group) {
+      this.currentGroup = group;
+      this.showDialogGroup = true;
+    },
+    editGroup: function (group) {
+      this.groups[group.id].group = group.groupName;
+      this.closeDialogGroup();
+    },
+    deleteGroup: function (group) {
+      this.groups.splice(group, 1);
+      this.closeDialogGroup();
+    },
+    closeDialogGroup: function () {
+      this.currentGroup = null;
+      this.showDialogGroup = false;
+    },
     saveQuestions: function () {
-      console.log("object", this.questions);
       this.$emit("save-question", this.questions);
     },
   },
@@ -239,6 +383,7 @@ h1 {
 }
 
 .group-header {
+  cursor: pointer;
   padding: 20px;
   font-size: 20px;
   font-weight: bold;
@@ -337,13 +482,11 @@ h1 {
   height: 100vh;
 }
 
-
-
 .cts-dialog {
   background: #fff;
   display: block !important;
   width: 600px;
-  min-height: 300px;
+  min-height: 150px;
   max-height: 90%;
   padding: 20px;
   overflow-y: auto;
@@ -352,15 +495,6 @@ h1 {
   box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2),
     0 24px 38px 3px rgba(0, 0, 0, 0.14), 0 9px 46px 8px rgba(0, 0, 0, 0.12);
   border-radius: 4px;
-}
-
-.cts-dialog h3 {
-  margin: 0;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  text-align: center;
-  font-weight: bold;
-  border-bottom: 1px solid #0091ea;
 }
 
 @-webkit-keyframes slide-down {
@@ -393,7 +527,20 @@ h1 {
 }
 
 .question-option {
+  position: relative;
   margin-bottom: 10px;
   margin-top: 10px;
+}
+
+.question-child-add {
+  position: absolute;
+  top: 5px;
+  font-size: 15px !important;
+  right: 14px;
+  cursor: pointer;
+}
+
+.child-question-box {
+  padding-left: 35px;
 }
 </style>
