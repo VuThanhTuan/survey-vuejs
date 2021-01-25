@@ -9,7 +9,7 @@
       >
         Thêm nhóm
       </button>
-      <button v-on:click="openAddNewQuestion()" class="btn-submit">
+      <button v-on:click="openQuestionDialog()" v-bind:disabled="simpleGroups.length === 0" class="btn-submit">
         Thêm câu hỏi
       </button>
     </div>
@@ -35,7 +35,7 @@
           <div class="question-num">{{ index + 1 }}</div>
           {{ item.question }}
           <span v-if="item.required" class="question-required">*</span>
-          <i v-on:click="openDialog(item)" class="fas fa-edit"></i>
+          <i v-on:click="openQuestionDialog(item)" class="fas fa-edit"></i>
         </div>
 
         <div class="question-answer">
@@ -44,7 +44,7 @@
             ><input v-bind:name="item.name" v-model="item.answer" />
           </div>
 
-          <div v-if="item.qsType === types.SignleChoice">
+          <div v-if="item.qsType === types.SingleChoice">
             <div
               class="question-option"
               v-for="option in item.options"
@@ -62,8 +62,8 @@
               ></custom-checkbox>
               <div class="child-question-box">
                 <child-question
-                  v-if="option.chidQuestions"
-                  :questions="option.chidQuestions"
+                  v-if="option.childQuestions"
+                  :questions="option.childQuestions"
                   v-on:edit-question="
                     openEditChildQuestion(
                       $event,
@@ -91,8 +91,8 @@
               ></custom-checkbox>
               <div class="child-question-box">
                 <child-question
-                  v-if="option.chidQuestions"
-                  :questions="option.chidQuestions"
+                  v-if="option.childQuestions"
+                  :questions="option.childQuestions"
                   v-on:edit-question="
                     openEditChildQuestion(
                       $event,
@@ -159,15 +159,15 @@ import AddEditGroup from "./AddEditGroup.vue";
 
 export default {
   components: { ChildQuestion, CustomCheckbox, AddEditQuestion, AddEditGroup },
-  name: "Survey",
   props: {
     data: {
       type: Array,
       required: false,
     },
   },
-  data: function () {
+  data: function() {
     const convertedGroups = this.data.map((x, index) => {
+      console.log('vao` dayyyy');
       return {
         group: x.group,
         questions: this.convertQuestion(x.questions, index),
@@ -185,18 +185,18 @@ export default {
     };
   },
   watch: {
-    groups: function (val) {
+    groups: function(val) {
       this.simpleGroups = val.map((x) => x.group);
     },
   },
   methods: {
-    showChildQuestion: function (question, option) {
+    showChildQuestion: function(question, option) {
       if (question.qsType == QuestionType.MultipleChoice) {
-        return option.chidQuestions && question.answer.includes(option.value);
+        return option.childQuestions && question.answer.includes(option.value);
       }
-      return option.chidQuestions && question.answer === option.value;
+      return option.childQuestions && question.answer === option.value;
     },
-    convertQuestion: function (questions, group) {
+    convertQuestion: function(questions, group) {
       const convertedQuestion = questions.map((item, index) => {
         return {
           ...item,
@@ -204,7 +204,7 @@ export default {
           qsGroup: group,
           answer:
             item.qsType === QuestionType.Text ||
-            item.qsType === QuestionType.SignleChoice
+            item.qsType === QuestionType.SingleChoice
               ? ""
               : [],
           options: item.options
@@ -213,8 +213,8 @@ export default {
                   ...x,
                   id: opIndex,
                   value: opIndex,
-                  chidQuestions: x.chidQuestions
-                    ? this.convertQuestion(x.chidQuestions)
+                  childQuestions: x.childQuestions
+                    ? this.convertQuestion(x.childQuestions)
                     : null,
                 };
               })
@@ -223,25 +223,26 @@ export default {
       });
       return convertedQuestion;
     },
-    popupOutside: function (event) {
+    popupOutside: function(event) {
       if (!event.target.closest(".cts-dialog")) {
-        this.closeDialog();
-        this.closeDialogGroup();
+        this.closeQuestionDialog();
+        this.closeGroupDialog();
       }
     },
-    openDialog: function (question) {
-      this.showDialog = true;
+    openQuestionDialog: function(question) {
       if (question) {
         this.currentQuestion = question;
       }
+      this.showDialog = true;
     },
-    closeDialog: function () {
+    closeQuestionDialog: function() {
       this.currentQuestion = null;
+      this.parentQuestion = null;
       this.showDialog = false;
     },
-    editQuestion: function (question) {
+    editQuestion: function(question) {
       if (question.qsGroup < 0 || question.qsGroup > this.groups.length - 1) {
-        this.closeDialog();
+        this.closeQuestionDialog();
         return;
       }
       const questions = this.groups[question.qsGroup].questions;
@@ -250,11 +251,11 @@ export default {
       if (index !== -1) {
         questions[index] = question;
       }
-      this.closeDialog();
+      this.closeQuestionDialog();
     },
-    addQuestion: function (question) {
+    addQuestion: function(question) {
       if (question.qsGroup < 0 || question.qsGroup > this.groups.length - 1) {
-        this.closeDialog();
+        this.closeQuestionDialog();
         return;
       }
       const newQuestion = {
@@ -262,101 +263,129 @@ export default {
         id: this.groups[question.qsGroup].questions.length + 1,
       };
       this.groups[question.qsGroup].questions.push(newQuestion);
-      this.closeDialog();
+      this.closeQuestionDialog();
     },
-    openAddNewQuestion: function () {
-      this.openDialog();
-    },
-    deleteQuestion: function (data) {
+    deleteQuestion: function(data) {
       this.groups[data.qsGroup].questions.splice(data.id, 1);
-      this.closeDialog();
+      this.closeQuestionDialog();
     },
-    openChildQuestion: function (question, option, group) {
+    openChildQuestion: function(question, option, group) {
       this.parentQuestion = {
         id: question.id,
         option,
         group,
       };
-      this.openDialog();
+      this.openQuestionDialog();
     },
-    openEditChildQuestion: function (question, group, parent, option) {
+    openEditChildQuestion: function(question, group, parent, option) {
       this.parentQuestion = {
         id: parent.id,
         option,
         group,
       };
       this.currentQuestion = question;
-      this.openDialog();
+      this.openQuestionDialog();
     },
-    addChildQuestion: function (question) {
+    addChildQuestion: function(question) {
       const parentQs = this.groups[question.parentQuestion.group].questions[
         question.parentQuestion.id
       ];
-      if (!parentQs.options[question.parentQuestion.option].chidQuestions) {
-        parentQs.options[question.parentQuestion.option].chidQuestions = [];
+      if (!parentQs.options[question.parentQuestion.option].childQuestions) {
+        parentQs.options[question.parentQuestion.option].childQuestions = [];
       }
       const childList =
-        parentQs.options[question.parentQuestion.option].chidQuestions;
+        parentQs.options[question.parentQuestion.option].childQuestions;
       const newQuestion = {
         ...question,
         id: childList.length + 1,
       };
       childList.push(newQuestion);
-      this.closeDialog();
+      this.closeQuestionDialog();
     },
-    editChildQuestion: function (question) {
+    editChildQuestion: function(question) {
       const parentQs = this.groups[question.parentQuestion.group].questions[
         question.parentQuestion.id
       ];
-      if (!parentQs.options[question.parentQuestion.option].chidQuestions) {
-        parentQs.options[question.parentQuestion.option].chidQuestions = [];
+      if (!parentQs.options[question.parentQuestion.option].childQuestions) {
+        parentQs.options[question.parentQuestion.option].childQuestions = [];
       }
       const childList = [
-        ...parentQs.options[question.parentQuestion.option].chidQuestions,
+        ...parentQs.options[question.parentQuestion.option].childQuestions,
       ];
-      const newQuestion = {
-        ...question,
-      };
-      childList[question.id] = newQuestion;
+
+      childList[question.id] = question;
       parentQs.options[
         question.parentQuestion.option
-      ].chidQuestions = childList;
-      this.closeDialog();
+      ].childQuestions = childList;
+      this.closeQuestionDialog();
     },
-    deleteChildQuestion: function (data) {
+    deleteChildQuestion: function(data) {
       const parentQs = this.groups[data.parentQuestion.group].questions[
         data.parentQuestion.id
       ];
       const childList =
-        parentQs.options[data.parentQuestion.option].chidQuestions;
+        parentQs.options[data.parentQuestion.option].childQuestions;
       childList.splice(data.id, 1);
-      this.closeDialog();
+      this.closeQuestionDialog();
     },
-    openAddNewGroup: function () {
+    openAddNewGroup: function() {
       this.showDialogGroup = true;
     },
-    addNewGroup: function (group) {
+    addNewGroup: function(group) {
       this.groups.push({ group, questions: [] });
-      this.closeDialogGroup();
+      this.closeGroupDialog();
     },
-    openEditGroup: function (group) {
+    openEditGroup: function(group) {
       this.currentGroup = group;
       this.showDialogGroup = true;
     },
-    editGroup: function (group) {
+    editGroup: function(group) {
       this.groups[group.id].group = group.groupName;
-      this.closeDialogGroup();
+      this.closeGroupDialog();
     },
-    deleteGroup: function (group) {
+    deleteGroup: function(group) {
       this.groups.splice(group, 1);
-      this.closeDialogGroup();
+      this.closeGroupDialog();
     },
-    closeDialogGroup: function () {
+    closeGroupDialog: function() {
       this.currentGroup = null;
       this.showDialogGroup = false;
     },
-    saveQuestions: function () {
-      this.$emit("save-question", this.questions);
+    saveQuestions: function() {
+      const standardizedData = this.standardizedData(this.groups);
+      console.log('-----', standardizedData);
+      this.$emit("save-question", standardizedData);
+    },
+    standardizedData: function(data) {
+      return data.map((x) => {
+        return {
+          group: x.group,
+          questions: !x.questions
+            ? null
+            : x.questions.map((q) => ({
+                question: q.question,
+                qsType: q.qsType,
+                required: q.required,
+                options: !q.options
+                  ? null
+                  : q.options.map((op) => ({
+                      label: op.label,
+                      childQuestions: !op.childQuestions
+                        ? null
+                        : op.childQuestions.map((cq) => ({
+                            question: cq.question,
+                            qsType: cq.qsType,
+                            required: cq.required,
+                            options: !cq.options
+                              ? null
+                              : cq.options.map((cpo) => ({
+                                  label: cpo.label,
+                                })),
+                          })),
+                    })),
+              })),
+        };
+      });
     },
   },
 };

@@ -6,7 +6,7 @@
       :key="item.question"
     >
       <div class="quetion-label">
-        <span>{{ item.question }}</span>
+        <div>{{ item.question }} <span v-if="item.required" class="question-required">*</span></div>
         <i v-on:click="editChildQuestion(item)" class="fas fa-edit"></i>
       </div>
 
@@ -27,7 +27,7 @@
           </div>
         </div>
 
-        <div v-if="item.qsType === types.SignleChoice">
+        <div v-if="item.qsType === types.SingleChoice">
           <div v-for="option in item.options" :key="option.value">
             <custom-checkbox
               :id="`${item.name}${option.value}`"
@@ -57,7 +57,6 @@ export default {
   },
   computed: {
     convertedQuestion: function() {
-      console.log('computed', this.questions);
       return this.convertQuestion(this.questions);
     }
   },
@@ -69,9 +68,9 @@ export default {
   methods: {
     showChildQuestion: function (question, option) {
       if (question.qsType == QuestionType.MultipleChoice) {
-        return option.chidQuestions && question.answer.includes(option.value);
+        return option.childQuestions && question.answer.includes(option.value);
       }
-      return option.chidQuestions && question.answer === option.value;
+      return option.childQuestions && question.answer === option.value;
     },
     convertQuestion: function (questions) {
       const convertedQuestion = questions.map((item, index) => {
@@ -80,7 +79,7 @@ export default {
           id: index,
           answer:
             item.qsType === QuestionType.Text ||
-            item.qsType === QuestionType.SignleChoice
+            item.qsType === QuestionType.SingleChoice
               ? ""
               : [],
         };
@@ -111,6 +110,10 @@ export default {
   padding: 10px;
   border-bottom: 1px solid #212121;
   text-align: left;
+}
+
+.question-required {
+  color: #cc2936;
 }
 
 .input-text-label {

@@ -35,7 +35,7 @@ export default {
   },
   data: function () {
     return {
-      groupName: this.group.group,
+      groupName: this.group ? this.group.group : '',
       groupNameError: false,
     };
   },

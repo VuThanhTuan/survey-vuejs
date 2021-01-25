@@ -51,19 +51,19 @@
         <custom-checkbox
           type="single"
           v-model="questionStyle"
-          optionValue="Text"
+          :optionValue="types.Text"
           label="Text"
         ></custom-checkbox>
         <custom-checkbox
           type="single"
           v-model="questionStyle"
-          optionValue="SignleChoice"
+          :optionValue="types.SingleChoice"
           label="Single Choice"
         ></custom-checkbox>
         <custom-checkbox
           type="single"
           v-model="questionStyle"
-          optionValue="MultipleChoice"
+          :optionValue="types.MultipleChoice"
           label="Multiple Choice"
         ></custom-checkbox>
       </div>
@@ -71,7 +71,7 @@
 
     <div
       v-if="
-        questionStyle === 'SignleChoice' || questionStyle === 'MultipleChoice'
+        questionStyle === types.SingleChoice || questionStyle === types.MultipleChoice
       "
       class="question-group"
     >
@@ -106,6 +106,7 @@
 
 <script>
 import CustomCheckbox from "./CustomCheckbox.vue";
+import { QuestionType } from "./surveyTypes";
 export default {
   components: { CustomCheckbox },
   props: {
@@ -124,6 +125,7 @@ export default {
   },
   data: function () {
     return {
+      types: QuestionType,
       hasError: false,
       questionGroup: 0,
       questionName: this.question ? this.question.question : "",
@@ -162,9 +164,9 @@ export default {
         qsType: this.questionStyle,
         question: this.questionName,
         required: this.questionType === "true" ? true : false,
-        answer: this.questionStyle === "MultipleChoice" ? [] : "",
+        answer: this.questionStyle === this.types.MultipleChoice ? [] : "",
         options:
-          this.questionStyle !== "Text"
+          this.questionStyle !== this.types.Text
             ? this.options.map((x) => {
                 return {
                   label: x.label,
@@ -205,22 +207,24 @@ export default {
     },
     isInvalidForm: function () {
       this.resetError();
-      this.hasError = false;
+
       if (!this.questionName) {
         this.questionNameError = true;
         this.hasError = true;
       }
 
       if (
-        this.questionStyle === "SignleChoice" ||
-        this.questionStyle === "MultipleChoice"
+        this.questionStyle === this.types.SingleChoice ||
+        this.questionStyle === this.types.MultipleChoice
       ) {
         this.options.forEach((element) => {
           element.error = !element.label;
         });
-        this.hasError =
-          this.options.filter((x) => x.error).length > 0 ? true : false;
+        if(this.options.filter((x) => x.error).length > 0) {
+          this.hasError = true
+        }
       }
+      
       return this.hasError;
     },
     resetError: function () {
